@@ -118,6 +118,59 @@
       font-family: var(--mono);
     }
 
+    body.locked #app-section {
+      display: none;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .profile-chip {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 7px 10px 7px 8px;
+      border: 3px solid rgba(255,255,255,0.14);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.05);
+      color: var(--white);
+    }
+    .profile-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--lime);
+      background: #222;
+    }
+    .profile-name {
+      font-family: var(--display);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .profile-sub {
+      font-size: 0.65rem;
+      color: #aaa;
+    }
+    .profile-logout {
+      border: 2px solid var(--lime);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--lime);
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 7px 12px;
+      cursor: pointer;
+    }
+    .profile-logout:hover {
+      background: var(--lime);
+      color: var(--black);
+    }
+
     /* ── HERO ────────────────────────────────── */
     .hero {
       background: var(--black);
@@ -176,6 +229,178 @@
       color: #aaa;
       max-width: 460px;
       line-height: 1.75;
+    }
+
+    .auth-shell {
+      padding: 56px 48px 24px;
+      background: linear-gradient(180deg, rgba(124,58,237,0.08), rgba(250,250,245,0.95));
+      border-bottom: var(--bw);
+    }
+    .auth-card {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 24px;
+      border: var(--bw4);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 10px 10px 0 var(--black);
+      background: var(--white);
+    }
+    .auth-copy {
+      padding: 42px;
+      background: linear-gradient(135deg, var(--black), #151515 60%, #1d1236 100%);
+      color: var(--white);
+    }
+    .auth-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 14px;
+      border-radius: 999px;
+      border: 2px solid var(--lime);
+      color: var(--lime);
+      font-family: var(--display);
+      font-size: 0.66rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+    .auth-title {
+      font-family: var(--display);
+      font-size: clamp(2rem, 4vw, 3.4rem);
+      line-height: 1.02;
+      margin-bottom: 18px;
+    }
+    .auth-text {
+      max-width: 540px;
+      color: #cfcfcf;
+      line-height: 1.75;
+      margin-bottom: 24px;
+    }
+    .auth-points {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .auth-point {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.78rem;
+      color: #e5e5e5;
+      letter-spacing: 0.04em;
+    }
+    .auth-point span {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--lime);
+      box-shadow: 0 0 0 4px rgba(198,241,53,0.14);
+      flex-shrink: 0;
+    }
+    .auth-preview {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 18px;
+      border: 2px solid rgba(255,255,255,0.14);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.05);
+    }
+    .auth-preview img {
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      object-fit: cover;
+      border: 2px solid var(--pink);
+      background: #222;
+    }
+    .auth-preview strong,
+    .auth-preview span {
+      display: block;
+    }
+    .auth-preview strong {
+      font-family: var(--display);
+      margin-bottom: 4px;
+    }
+    .auth-preview span {
+      font-size: 0.78rem;
+      color: #b9b9b9;
+    }
+    .auth-panel {
+      padding: 34px;
+      background: linear-gradient(180deg, #fff, #f4f4ee);
+    }
+    .auth-tabs {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .auth-tab {
+      border: 3px solid var(--black);
+      border-radius: 14px;
+      background: transparent;
+      padding: 14px 16px;
+      font-family: var(--display);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .auth-tab.active {
+      background: var(--lime);
+      box-shadow: 4px 4px 0 var(--black);
+    }
+    .auth-form {
+      display: grid;
+      gap: 14px;
+    }
+    .auth-field span {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #666;
+    }
+    .auth-field input {
+      width: 100%;
+      border: 3px solid var(--black);
+      border-radius: 14px;
+      padding: 14px 16px;
+      background: var(--white);
+      font-family: var(--mono);
+      font-size: 0.92rem;
+      outline: none;
+    }
+    .auth-field input:focus {
+      box-shadow: 0 0 0 4px rgba(0,229,255,0.28);
+    }
+    .auth-submit {
+      margin-top: 6px;
+      border: 3px solid var(--black);
+      border-radius: 14px;
+      background: var(--pink);
+      color: var(--black);
+      padding: 16px 18px;
+      font-family: var(--display);
+      font-size: 0.95rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 6px 6px 0 var(--black);
+    }
+    .auth-submit:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 8px 8px 0 var(--black);
+    }
+    .auth-status {
+      min-height: 24px;
+      margin-top: 14px;
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      color: #8b0000;
     }
 
     .hero-badges {
@@ -548,6 +773,9 @@
     @media (max-width: 900px) {
       .hero-inner { grid-template-columns: 1fr; gap: 40px; }
       .hero-badges { flex-direction: row; flex-wrap: wrap; }
+      .auth-shell { padding: 32px 24px 18px; }
+      .auth-card { grid-template-columns: 1fr; }
+      .auth-copy, .auth-panel { padding: 24px; }
       .features-strip { grid-template-columns: 1fr; }
       .ft { border-right: none; border-bottom: var(--bw); }
       .ft:last-child { border-bottom: none; }
@@ -570,7 +798,7 @@
     .fd3{animation-delay:.25s} .fd4{animation-delay:.35s}
   </style>
 </head>
-<body>
+<body class="locked">
 
 <!-- MARQUEE -->
 <div class="marquee-wrap">
@@ -603,6 +831,14 @@
       <span id="view-num">100</span>&nbsp;views
     </div>
     <span class="ver-pill">v1.0.0</span>
+    <div id="profile-chip" class="profile-chip" hidden>
+      <img id="profile-avatar" class="profile-avatar" alt="User avatar" />
+      <div>
+        <div class="profile-name" id="profile-name">Guest</div>
+        <div class="profile-sub" id="profile-sub">Sign in required</div>
+      </div>
+      <button id="logout-btn" class="profile-logout" type="button">Log out</button>
+    </div>
   </div>
 </header>
 
@@ -622,7 +858,7 @@
         Into <span class="hl-lime">Words</span><br>
         <span class="hl-cyan">Instantly.</span>
       </h1>
-      <p class="hero-sub fade-up fd3">Drop your audio file and get crisp, accurate transcriptions in seconds — no signup, no friction.</p>
+      <p class="hero-sub fade-up fd3">Drop your audio file, sign in once, and get crisp, accurate transcriptions in seconds.</p>
     </div>
 
     <div class="hero-badges fade-up fd4">
@@ -651,6 +887,62 @@
         </svg>
         Multi-Format
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- AUTH GATE -->
+<section id="auth-shell" class="auth-shell">
+  <div class="auth-card fade-up fd1">
+    <div class="auth-copy">
+      <div class="auth-eyebrow">Account access</div>
+      <h2 class="auth-title">Sign in to unlock transcription</h2>
+      <p class="auth-text">Create a profile once, keep your details in D1-compatible storage, and get a randomly assigned avatar from the shared image set.</p>
+      <div class="auth-points">
+        <div class="auth-point"><span></span> Login and signup on the same screen</div>
+        <div class="auth-point"><span></span> Avatar images served from the static asset set or R2</div>
+        <div class="auth-point"><span></span> Session cookies keep you signed in</div>
+      </div>
+      <div class="auth-preview" id="auth-preview">
+        <img id="auth-preview-avatar" alt="Preview avatar" />
+        <div>
+          <strong id="auth-preview-name">Guest user</strong>
+          <span id="auth-preview-email">Awaiting sign in</span>
+        </div>
+      </div>
+    </div>
+    <div class="auth-panel">
+      <div class="auth-tabs" role="tablist" aria-label="Authentication mode">
+        <button type="button" class="auth-tab active" data-auth-tab="login">Log in</button>
+        <button type="button" class="auth-tab" data-auth-tab="signup">Sign up</button>
+      </div>
+      <form id="login-form" class="auth-form" autocomplete="on">
+        <label class="auth-field">
+          <span>Email</span>
+          <input type="email" name="email" placeholder="you@example.com" required />
+        </label>
+        <label class="auth-field">
+          <span>Password</span>
+          <input type="password" name="password" placeholder="••••••••" required minlength="8" />
+        </label>
+        <button class="auth-submit" type="submit">Log in</button>
+      </form>
+      <form id="signup-form" class="auth-form hidden" autocomplete="on">
+        <label class="auth-field">
+          <span>Name</span>
+          <input type="text" name="name" placeholder="Your name" required />
+        </label>
+        <label class="auth-field">
+          <span>Email</span>
+          <input type="email" name="email" placeholder="you@example.com" required />
+        </label>
+        <label class="auth-field">
+          <span>Password</span>
+          <input type="password" name="password" placeholder="At least 8 characters" required minlength="8" />
+        </label>
+        <button class="auth-submit" type="submit">Create account</button>
+      </form>
+      <div id="auth-status" class="auth-status" aria-live="polite"></div>
     </div>
   </div>
 </section>
@@ -696,7 +988,7 @@
 </div>
 
 <!-- APP SECTION -->
-<div class="app-section">
+<div class="app-section" id="app-section">
 
   <!-- LEFT: UPLOAD -->
   <section class="panel" id="upload-panel">
@@ -779,7 +1071,7 @@
       Returned from cache — 30 min TTL
     </div>
 
-    <button id="copy-btn" onclick="copyResult()">
+    <button id="copy-btn">
       <!-- Copy small SVG -->
       <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
         <rect x="5" y="1" width="9" height="11" rx="2.5" stroke="currentColor" stroke-width="1.8"/>
@@ -804,131 +1096,287 @@
 </footer>
 
 <script>
-  // ── VIEW COUNTER ─────────────────────────────
-  const viewNumEl = document.getElementById('view-num');
-  let stored = parseInt(localStorage.getItem('guine_views') || '99');
-  stored += 1;
-  localStorage.setItem('guine_views', stored);
-  let cur = stored - 1;
-  const ticker = setInterval(() => {
-    cur++;
-    viewNumEl.textContent = cur.toLocaleString();
-    if (cur >= stored) clearInterval(ticker);
-  }, 55);
-
-  // ── CONFIG ───────────────────────────────────
   const API_URL = (window.GUINE_API_URL || '').replace(/\/$/, '') || '';
   const CACHE_TTL_MS = 30 * 60 * 1000;
 
-  let selectedFile = null;
-
-  const dropZone    = document.getElementById('drop-zone');
-  const fileInput   = document.getElementById('file-input');
-  const fileInfo    = document.getElementById('file-info');
-  const fileNameEl  = document.getElementById('file-name-text');
-  const fileMetaEl  = document.getElementById('file-meta-text');
-  const btn         = document.getElementById('transcribe-btn');
-  const statusEl    = document.getElementById('status');
-  const errorBox    = document.getElementById('error-box');
-  const errorText   = document.getElementById('error-text');
-  const outputBox   = document.getElementById('output-box');
+  const viewNumEl = document.getElementById('view-num');
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+  const fileInfo = document.getElementById('file-info');
+  const fileNameEl = document.getElementById('file-name-text');
+  const fileMetaEl = document.getElementById('file-meta-text');
+  const btn = document.getElementById('transcribe-btn');
+  const statusEl = document.getElementById('status');
+  const errorBox = document.getElementById('error-box');
+  const errorText = document.getElementById('error-text');
+  const outputBox = document.getElementById('output-box');
   const engineBadge = document.getElementById('engine-badge');
-  const engineName  = document.getElementById('engine-name');
+  const engineName = document.getElementById('engine-name');
   const cacheNotice = document.getElementById('cache-notice');
-  const copyBtn     = document.getElementById('copy-btn');
+  const copyBtn = document.getElementById('copy-btn');
+  const appSection = document.getElementById('app-section');
+  const authShell = document.getElementById('auth-shell');
+  const authStatus = document.getElementById('auth-status');
+  const loginForm = document.getElementById('login-form');
+  const signupForm = document.getElementById('signup-form');
+  const authTabs = Array.from(document.querySelectorAll('[data-auth-tab]'));
+  const profileChip = document.getElementById('profile-chip');
+  const profileAvatar = document.getElementById('profile-avatar');
+  const profileName = document.getElementById('profile-name');
+  const profileSub = document.getElementById('profile-sub');
+  const logoutBtn = document.getElementById('logout-btn');
+  const authPreviewAvatar = document.getElementById('auth-preview-avatar');
+  const authPreviewName = document.getElementById('auth-preview-name');
+  const authPreviewEmail = document.getElementById('auth-preview-email');
 
-  dropZone.addEventListener('click', () => fileInput.click());
-  dropZone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
-  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
-  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-  dropZone.addEventListener('drop', e => {
-    e.preventDefault(); dropZone.classList.remove('dragover');
-    const f = e.dataTransfer.files[0]; if (f) handleFile(f);
-  });
-  fileInput.addEventListener('change', () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
+  const AUDIO_EXTENSIONS = ['wav', 'mp3', 'm4a', 'ogg'];
+  const AUDIO_MIME_TYPES = ['audio/wav', 'audio/mpeg', 'audio/mp4', 'audio/ogg', 'audio/wave', 'audio/x-wav', 'audio/mp3', 'audio/m4a', 'audio/x-m4a'];
 
-  function handleFile(file) {
-    clearError(); clearOutput();
-    const EXT  = ['wav','mp3','m4a','ogg'];
-    const MIME = ['audio/wav','audio/mpeg','audio/mp4','audio/ogg','audio/wave','audio/x-wav','audio/mp3','audio/m4a','audio/x-m4a'];
-    const ext  = file.name.split('.').pop().toLowerCase();
-    if (!MIME.includes(file.type) && !EXT.includes(ext)) { showError(`Unsupported type: ${file.type||ext}. Use WAV, MP3, M4A or OGG.`); return; }
-    if (file.size > 10*1024*1024) { showError(`Too large: ${formatBytes(file.size)}. Max is 10 MB.`); return; }
-    selectedFile = file;
-    fileNameEl.textContent = file.name;
-    fileMetaEl.textContent = `${formatBytes(file.size)} · ${file.type||ext.toUpperCase()}`;
-    fileInfo.style.display = 'block';
-    btn.disabled = false;
+  let selectedFile = null;
+  let currentUser = null;
+  let activeAuthMode = 'login';
+
+  function setAuthStatus(message, tone = 'normal') {
+    authStatus.textContent = message || '';
+    authStatus.style.color = tone === 'error' ? '#8b0000' : tone === 'success' ? '#14532d' : '#4a4a4a';
   }
 
-  async function hashFile(f) {
-    const buf = await f.arrayBuffer();
-    const h   = await crypto.subtle.digest('SHA-256', buf);
-    return Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2,'0')).join('');
+  function setAuthMode(mode) {
+    activeAuthMode = mode;
+    authTabs.forEach((tab) => tab.classList.toggle('active', tab.dataset.authTab === mode));
+    loginForm.classList.toggle('hidden', mode !== 'login');
+    signupForm.classList.toggle('hidden', mode !== 'signup');
+    setAuthStatus('');
+  }
+
+  function setAuthenticatedUser(user) {
+    currentUser = user;
+    document.body.classList.remove('locked');
+    authShell.hidden = true;
+    profileChip.hidden = false;
+    profileAvatar.src = user.avatar;
+    profileAvatar.alt = `${user.name} avatar`;
+    profileName.textContent = user.name;
+    profileSub.textContent = user.email;
+    authPreviewAvatar.src = user.avatar;
+    authPreviewAvatar.alt = `${user.name} avatar`;
+    authPreviewName.textContent = user.name;
+    authPreviewEmail.textContent = user.email;
+  }
+
+  function setLoggedOutState() {
+    currentUser = null;
+    document.body.classList.add('locked');
+    authShell.hidden = false;
+    profileChip.hidden = true;
+    profileAvatar.removeAttribute('src');
+    profileAvatar.alt = 'User avatar';
+    profileName.textContent = 'Guest';
+    profileSub.textContent = 'Sign in required';
+    authPreviewAvatar.src = '/static/image.png';
+    authPreviewAvatar.alt = 'Preview avatar';
+    authPreviewName.textContent = 'Guest user';
+    authPreviewEmail.textContent = 'Awaiting sign in';
+    resetTranscriptionState();
+  }
+
+  function resetTranscriptionState() {
+    selectedFile = null;
+    fileInput.value = '';
+    fileInfo.style.display = 'none';
+    fileNameEl.textContent = '—';
+    fileMetaEl.textContent = '—';
+    btn.disabled = true;
+    clearError();
+    clearOutput();
+    setLoading(false);
+  }
+
+  function setLoading(on) {
+    btn.disabled = on || !selectedFile || !currentUser;
+    statusEl.style.display = on ? 'block' : 'none';
+    statusEl.className = on ? 'loading' : '';
+  }
+
+  function showResult(text, engine, fromCache) {
+    outputBox.value = text || '(empty transcription)';
+    outputBox.classList.add('has-content');
+    engineName.textContent = engine;
+    engineBadge.style.display = 'flex';
+    copyBtn.style.display = 'inline-flex';
+    if (fromCache) {
+      cacheNotice.style.display = 'flex';
+    }
+  }
+
+  function clearOutput() {
+    outputBox.value = '';
+    outputBox.classList.remove('has-content');
+    engineBadge.style.display = 'none';
+    copyBtn.style.display = 'none';
+    cacheNotice.style.display = 'none';
+  }
+
+  function showError(message) {
+    errorText.textContent = message;
+    errorBox.style.display = 'block';
+  }
+
+  function clearError() {
+    errorBox.style.display = 'none';
+    errorText.textContent = '';
+  }
+
+  function formatBytes(bytes) {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / 1048576).toFixed(2)} MB`;
+  }
+
+  async function requestJSON(path, options = {}) {
+    const response = await fetch(`${API_URL}${path}`, {
+      credentials: 'include',
+      ...options,
+      headers: {
+        ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+        ...(options.headers || {}),
+      },
+    });
+
+    const data = await response.json().catch(() => ({ detail: 'Invalid server response.' }));
+    if (!response.ok) {
+      throw new Error(data.detail || `Request failed with status ${response.status}`);
+    }
+    return data;
+  }
+
+  async function bootstrapAuth() {
+    try {
+      const data = await requestJSON('/auth/me');
+      setAuthenticatedUser(data.user);
+    } catch {
+      setLoggedOutState();
+    }
+  }
+
+  async function handleAuthSubmit(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const payload = Object.fromEntries(new FormData(form).entries());
+    setAuthStatus('Working...');
+
+    try {
+      const data = await requestJSON(activeAuthMode === 'login' ? '/auth/login' : '/auth/signup', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      setAuthenticatedUser(data.user);
+      setAuthStatus('Signed in.', 'success');
+      form.reset();
+      resetTranscriptionState();
+    } catch (error) {
+      setAuthStatus(error.message || 'Authentication failed.', 'error');
+    }
+  }
+
+  async function handleLogout() {
+    try {
+      await requestJSON('/auth/logout', { method: 'POST' });
+    } finally {
+      setLoggedOutState();
+      setAuthStatus('Signed out.', 'normal');
+      setAuthMode('login');
+    }
+  }
+
+  function handleFile(file) {
+    clearError();
+    clearOutput();
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!AUDIO_MIME_TYPES.includes(file.type) && !AUDIO_EXTENSIONS.includes(ext)) {
+      showError(`Unsupported type: ${file.type || ext}. Use WAV, MP3, M4A or OGG.`);
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      showError(`Too large: ${formatBytes(file.size)}. Max is 10 MB.`);
+      return;
+    }
+
+    selectedFile = file;
+    fileNameEl.textContent = file.name;
+    fileMetaEl.textContent = `${formatBytes(file.size)} · ${file.type || ext.toUpperCase()}`;
+    fileInfo.style.display = 'block';
+    btn.disabled = !currentUser;
+  }
+
+  async function hashFile(file) {
+    const buffer = await file.arrayBuffer();
+    const digest = await crypto.subtle.digest('SHA-256', buffer);
+    return Array.from(new Uint8Array(digest)).map((value) => value.toString(16).padStart(2, '0')).join('');
   }
 
   function getCached(hash) {
     try {
       const raw = localStorage.getItem(`guine_${hash}`);
       if (!raw) return null;
-      const e = JSON.parse(raw);
-      if (Date.now() > e.expires) { localStorage.removeItem(`guine_${hash}`); return null; }
-      return e;
-    } catch { return null; }
-  }
-  function setCache(hash, transcription, engine) {
-    try { localStorage.setItem(`guine_${hash}`, JSON.stringify({transcription, engine, expires: Date.now()+CACHE_TTL_MS})); } catch {}
+      const entry = JSON.parse(raw);
+      if (Date.now() > entry.expires) {
+        localStorage.removeItem(`guine_${hash}`);
+        return null;
+      }
+      return entry;
+    } catch {
+      return null;
+    }
   }
 
-  btn.addEventListener('click', async () => {
-    if (!selectedFile) return;
-    setLoading(true); clearError(); clearOutput();
-    cacheNotice.style.display = 'none';
+  function setCache(hash, transcription, engine) {
     try {
-      const hash   = await hashFile(selectedFile);
+      localStorage.setItem(`guine_${hash}`, JSON.stringify({ transcription, engine, expires: Date.now() + CACHE_TTL_MS }));
+    } catch {
+      // Ignore storage quota failures.
+    }
+  }
+
+  async function transcribeSelectedFile() {
+    if (!selectedFile || !currentUser) return;
+    setLoading(true);
+    clearError();
+    clearOutput();
+    cacheNotice.style.display = 'none';
+
+    try {
+      const hash = await hashFile(selectedFile);
       const cached = getCached(hash);
-      if (cached) { showResult(cached.transcription, cached.engine, true); setLoading(false); return; }
-      const fd = new FormData(); fd.append('file', selectedFile);
-      const res  = await fetch(`${API_URL}/stt`, {method:'POST', body:fd});
-      const data = await res.json().catch(() => ({detail:'Invalid server response.'}));
-      if (!res.ok) throw new Error(data.detail||`Server error: ${res.status}`);
-      const text   = data.transcription?.text ?? data.transcription ?? '';
+      if (cached) {
+        showResult(cached.transcription, cached.engine, true);
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      const response = await fetch(`${API_URL}/stt`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      const data = await response.json().catch(() => ({ detail: 'Invalid server response.' }));
+      if (!response.ok) {
+        throw new Error(data.detail || `Server error: ${response.status}`);
+      }
+
+      const text = data.transcription?.text ?? data.transcription ?? '';
       const engine = data.engine || 'unknown';
       setCache(hash, text, engine);
       showResult(text, engine, false);
-    } catch (err) {
-      showError(err.message||'Network error — is the backend reachable?');
+    } catch (error) {
+      showError(error.message || 'Network error — is the backend reachable?');
     } finally {
       setLoading(false);
     }
-  });
+  }
 
-  function setLoading(on) {
-    btn.disabled = on;
-    statusEl.style.display = on ? 'block' : 'none';
-    statusEl.className     = on ? 'loading' : '';
-  }
-  function showResult(text, engine, fromCache) {
-    outputBox.value = text || '(empty transcription)';
-    outputBox.classList.add('has-content');
-    engineName.textContent = engine;
-    engineBadge.style.display = 'flex';
-    copyBtn.style.display     = 'inline-flex';
-    if (fromCache) cacheNotice.style.display = 'flex';
-  }
-  function clearOutput() {
-    outputBox.value = '';
-    outputBox.classList.remove('has-content');
-    engineBadge.style.display = 'none';
-    copyBtn.style.display     = 'none';
-  }
-  function showError(msg) { errorText.textContent = msg; errorBox.style.display = 'block'; }
-  function clearError()   { errorBox.style.display = 'none'; errorText.textContent = ''; }
-  function formatBytes(b) {
-    if (b < 1024) return `${b} B`;
-    if (b < 1048576) return `${(b/1024).toFixed(1)} KB`;
-    return `${(b/1048576).toFixed(2)} MB`;
-  }
   function copyResult() {
     if (!outputBox.value) return;
     navigator.clipboard.writeText(outputBox.value).then(() => {
@@ -938,6 +1386,43 @@
       }, 2000);
     });
   }
+
+  let stored = parseInt(localStorage.getItem('guine_views') || '99', 10);
+  stored += 1;
+  localStorage.setItem('guine_views', String(stored));
+  let cur = stored - 1;
+  const ticker = setInterval(() => {
+    cur += 1;
+    viewNumEl.textContent = cur.toLocaleString();
+    if (cur >= stored) clearInterval(ticker);
+  }, 55);
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') fileInput.click(); });
+  dropZone.addEventListener('dragover', (event) => { event.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', (event) => {
+    event.preventDefault();
+    dropZone.classList.remove('dragover');
+    const droppedFile = event.dataTransfer.files[0];
+    if (droppedFile) handleFile(droppedFile);
+  });
+  fileInput.addEventListener('change', () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
+  btn.addEventListener('click', transcribeSelectedFile);
+  copyBtn.addEventListener('click', copyResult);
+  loginForm.addEventListener('submit', handleAuthSubmit);
+  signupForm.addEventListener('submit', handleAuthSubmit);
+  authTabs.forEach((tab) => tab.addEventListener('click', () => setAuthMode(tab.dataset.authTab)));
+  logoutBtn.addEventListener('click', handleLogout);
+
+  authPreviewAvatar.src = '/static/image.png';
+  authPreviewAvatar.alt = 'Preview avatar';
+  bootstrapAuth().finally(() => {
+    if (!currentUser) {
+      setLoggedOutState();
+    }
+    setAuthMode('login');
+  });
 </script>
 </body>
 </html>

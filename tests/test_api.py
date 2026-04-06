@@ -3,12 +3,20 @@ Guine API tests — run with:
   pytest tests/test_api.py -v
 """
 import io
-import time
+import os
+import tempfile
 import wave
+from pathlib import Path
 
 import pytest
-import httpx
 from httpx import AsyncClient, ASGITransport
+
+# Keep auth state isolated per test run.
+TEST_DB_DIR = Path(tempfile.mkdtemp(prefix="guine-tests-"))
+os.environ.setdefault("GUINE_DB_PATH", str(TEST_DB_DIR / "guine.sqlite3"))
+os.environ.setdefault("GUINE_SESSION_SECRET", "test-secret")
+os.environ.setdefault("GUINE_SESSION_SAME_SITE", "lax")
+os.environ.setdefault("GUINE_SESSION_HTTPS_ONLY", "false")
 
 from app.main import app
 
@@ -37,6 +45,18 @@ async def client():
         yield ac
 
 
+async def sign_up(client: AsyncClient, email: str = "tester@example.com", password: str = "password123"):
+    res = await client.post(
+        "/auth/signup",
+        json={"name": "Test User", "email": email, "password": password},
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["user"]["email"] == email
+    assert data["user"]["avatar"].startswith("/static/")
+    return data["user"]
+
+
 # ── TESTS ──────────────────────────────────────────────────────────────────
 
 @pytest.mark.anyio
@@ -56,6 +76,27 @@ async def test_root_serves_frontend(client):
 
 
 @pytest.mark.anyio
+async def test_signup_login_and_me(client):
+    user = await sign_up(client, email="signup@example.com")
+
+    me = await client.get("/auth/me")
+    assert me.status_code == 200
+    assert me.json()["user"]["email"] == user["email"]
+
+    logout = await client.post("/auth/logout")
+    assert logout.status_code == 200
+
+    missing = await client.get("/auth/me")
+    assert missing.status_code == 401
+
+    login = await client.post(
+        "/auth/login",
+        json={"email": "signup@example.com", "password": "password123"},
+    )
+    assert login.status_code == 200
+
+
+@pytest.mark.anyio
 async def test_metrics_endpoint(client):
     res = await client.get("/metrics")
     assert res.status_code == 200
@@ -68,6 +109,7 @@ async def test_stt_endpoint_valid_wav(client):
     Send a silent WAV — Google will likely fail; whisper should return empty.
     We only check that the response shape is correct, not content.
     """
+    await sign_up(client, email="stt@example.com")
     wav_bytes = make_wav()
     files = {"file": ("test.wav", wav_bytes, "audio/wav")}
     res = await client.post("/stt", files=files)
@@ -82,6 +124,7 @@ async def test_stt_endpoint_valid_wav(client):
 @pytest.mark.anyio
 async def test_file_size_limit(client):
     """Files over 10 MB must be rejected with 413."""
+    await sign_up(client, email="size@example.com")
     big_data = b"\x00" * (10 * 1024 * 1024 + 1)
     files = {"file": ("big.wav", big_data, "audio/wav")}
     res = await client.post("/stt", files=files)
@@ -92,6 +135,7 @@ async def test_file_size_limit(client):
 @pytest.mark.anyio
 async def test_unsupported_file_type(client):
     """Non-audio files must be rejected with 415."""
+    await sign_up(client, email="type@example.com")
     files = {"file": ("doc.txt", b"hello world", "text/plain")}
     res = await client.post("/stt", files=files)
     assert res.status_code == 415
@@ -104,6 +148,8 @@ async def test_rate_limit(client):
     We override client_ip to avoid collisions with other tests.
     """
     wav_bytes = make_wav(100)
+
+    await sign_up(client, email="rate@example.com")
 
     # Reset rate limiter state by importing and clearing
     from app.main import rate_limiter

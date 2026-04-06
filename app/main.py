@@ -1,12 +1,14 @@
 import asyncio
+import os
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, UploadFile, File, HTTPException, Request
+from fastapi import Body, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
+from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
 
 from app.metrics import (
     TOTAL_REQUESTS,
@@ -18,7 +20,7 @@ from app.metrics import (
 )
 from app.queue import AudioQueue
 from app.rate_limit import RateLimiter
-from app.stt import transcribe_audio
+from app.storage import UserStore
 
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 ALLOWED_TYPES = {"audio/wav", "audio/mpeg", "audio/mp4", "audio/ogg", "audio/x-wav",
@@ -26,6 +28,11 @@ ALLOWED_TYPES = {"audio/wav", "audio/mpeg", "audio/mp4", "audio/ogg", "audio/x-w
 
 audio_queue = AudioQueue()
 rate_limiter = RateLimiter(max_requests=5, window_seconds=60)
+user_store = UserStore()
+SESSION_COOKIE = os.environ.get("GUINE_SESSION_COOKIE", "guine_session")
+SESSION_SECRET_KEY = os.environ.get("GUINE_SESSION_SECRET", "change-me-in-production")
+SESSION_SAME_SITE = os.environ.get("GUINE_SESSION_SAME_SITE", "lax")
+SESSION_HTTPS_ONLY = os.environ.get("GUINE_SESSION_HTTPS_ONLY", "false").lower() == "true"
 
 
 @asynccontextmanager
@@ -46,6 +53,14 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=SESSION_SECRET_KEY,
+    session_cookie=SESSION_COOKIE,
+    same_site=SESSION_SAME_SITE,
+    https_only=SESSION_HTTPS_ONLY,
+)
+
 FRONTEND_INDEX = Path(__file__).resolve().parent.parent / "frontend" / "index.html"
 FRONTEND_STATIC = Path(__file__).resolve().parent.parent / "frontend" / "static"
 
@@ -57,8 +72,8 @@ app.add_middleware(
         "http://127.0.0.1:3000",
     ],
     allow_origin_regex=r"^https://([a-z0-9-]+\.)?pages\.dev$",
-    allow_credentials=False,
-    allow_methods=["GET", "POST"],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -73,7 +88,77 @@ async def security_headers(request: Request, call_next):
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    if request.url.path.startswith("/static/"):
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        response.headers["CDN-Cache-Control"] = "public, max-age=31536000, immutable"
+    elif request.url.path == "/":
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    elif request.url.path.startswith("/auth/") or request.url.path in {"/health", "/metrics"}:
+        response.headers["Cache-Control"] = "no-store"
     return response
+
+
+def _current_user(request: Request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return None
+    return user_store.get_user_by_id(int(user_id))
+
+
+def _require_user(request: Request):
+    user = _current_user(request)
+    if user is None:
+        raise HTTPException(status_code=401, detail="Authentication required.")
+    return user
+
+
+def _auth_payload(user):
+    return {
+        "user": user.to_public_dict(),
+    }
+
+
+@app.get("/auth/me")
+async def auth_me(request: Request):
+    user = _current_user(request)
+    if user is None:
+        raise HTTPException(status_code=401, detail="Not authenticated.")
+    return {"authenticated": True, "user": user.to_public_dict()}
+
+
+@app.post("/auth/signup")
+async def auth_signup(request: Request, payload: dict = Body(...)):
+    try:
+        user = user_store.create_user(
+            name=str(payload.get("name", "")),
+            email=str(payload.get("email", "")),
+            password=str(payload.get("password", "")),
+        )
+    except ValueError as exc:
+        message = str(exc)
+        status_code = 409 if "already exists" in message.lower() else 400
+        raise HTTPException(status_code=status_code, detail=message)
+
+    request.session["user_id"] = user.id
+    return _auth_payload(user)
+
+
+@app.post("/auth/login")
+async def auth_login(request: Request, payload: dict = Body(...)):
+    email = str(payload.get("email", ""))
+    password = str(payload.get("password", ""))
+    user = user_store.authenticate(email=email, password=password)
+    if user is None:
+        raise HTTPException(status_code=401, detail="Invalid email or password.")
+
+    request.session["user_id"] = user.id
+    return _auth_payload(user)
+
+
+@app.post("/auth/logout")
+async def auth_logout(request: Request):
+    request.session.clear()
+    return {"ok": True}
 
 
 @app.get("/health")
@@ -103,7 +188,13 @@ async def metrics():
 async def speech_to_text(request: Request, file: UploadFile = File(...)):
     TOTAL_REQUESTS.inc()
 
-    client_ip = request.client.host
+    try:
+        _require_user(request)
+    except HTTPException:
+        FAILED_REQUESTS.inc()
+        raise
+
+    client_ip = request.client.host if request.client else "unknown"
     if not rate_limiter.allow(client_ip):
         FAILED_REQUESTS.inc()
         raise HTTPException(

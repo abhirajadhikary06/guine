@@ -10,12 +10,14 @@ Built to test FastAPI Cloud backend deployment + Cloudflare Pages frontend deplo
 ```
 Browser (Cloudflare Pages)
         │
-        │  POST /stt  (multipart audio)
+   │  POST /auth/signup, /auth/login, /stt
         ▼
 Cloudflare (traffic shield, CDN, DDoS protection)
         │
         ▼
 FastAPI backend (FastAPI Cloud / Docker)
+   ├── Session auth (signed cookies)
+   ├── User store (SQLite schema compatible with Cloudflare D1)
    ├── Rate limiter (5 req/min/IP — pure Python)
    ├── asyncio.Queue (internal job queue)
    ├── STT Engine
@@ -32,6 +34,9 @@ FastAPI backend (FastAPI Cloud / Docker)
 |---|---|
 | Frontend | HTML · CSS · vanilla JS |
 | Design | Neu-brutalism |
+| Auth | Login/signup with cookie sessions |
+| User storage | SQLite / Cloudflare D1-compatible schema |
+| Avatars | Randomly assigned from static assets or R2 public URLs |
 | Backend | FastAPI (async) |
 | STT Primary | SpeechRecognition (Google Speech API) |
 | STT Fallback | faster-whisper (tiny, CPU) |
@@ -46,13 +51,16 @@ FastAPI backend (FastAPI Cloud / Docker)
 
 ## How It Works
 
-1. User selects an audio file (WAV / MP3 / M4A / OGG, max 10 MB).
-2. Browser computes a SHA-256 hash of the file.
-3. If a cached transcription exists in `localStorage` (TTL 30 min) → show it instantly.
-4. Otherwise, the file is sent as multipart POST to `/stt`.
-5. FastAPI validates type + size → checks rate limit → enqueues the job.
-6. The queue worker picks it up → tries Google Speech → falls back to faster-whisper.
-7. Result is returned, stored in `localStorage`, and displayed.
+1. User signs up or logs in on the landing gate.
+2. FastAPI stores the account in a SQLite schema that matches Cloudflare D1 tables.
+3. A random avatar is assigned from `frontend/static/image*.png` and returned to the client.
+4. User selects an audio file (WAV / MP3 / M4A / OGG, max 10 MB).
+5. Browser computes a SHA-256 hash of the file.
+6. If a cached transcription exists in `localStorage` (TTL 30 min) → show it instantly.
+7. Otherwise, the file is sent as multipart POST to `/stt` with the session cookie.
+8. FastAPI validates auth + type + size → checks rate limit → enqueues the job.
+9. The queue worker picks it up → tries Google Speech → falls back to faster-whisper.
+10. Result is returned, stored in `localStorage`, and displayed.
 
 ---
 
@@ -108,6 +116,13 @@ open frontend/index.html
 > <script>window.GUINE_API_URL = "http://localhost:8000";</script>
 > ```
 
+Authentication uses cookie sessions. If the frontend and backend are on different origins, set these backend env vars for your deployment:
+
+- `GUINE_SESSION_SECRET`
+- `GUINE_SESSION_SAME_SITE=none`
+- `GUINE_SESSION_HTTPS_ONLY=true`
+- `GUINE_AVATAR_BASE_URL=https://<your-r2-public-base>/avatars` if you move avatar files to R2
+
 ---
 
 ## Docker Setup
@@ -149,6 +164,30 @@ docker run -p 8000:8000 -e WORKERS=8 guine
    ```
 5. Deploy. Cloudflare serves the frontend globally.
 
+Cloudflare can cache the static UI and avatar assets because the backend now emits long-lived cache headers for `/static/*`. The HTML shell remains no-cache so deployments stay fresh.
+
+### User Storage — Cloudflare D1
+
+The app uses a single `users` table schema that is SQLite-compatible, so the same SQL can be imported into D1. The backend implementation in this repo uses a local SQLite file for development; in production, point the same schema at D1 through your deployment strategy.
+
+The canonical table definition lives in [schema.sql](schema.sql).
+
+Suggested columns:
+
+```sql
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+name TEXT NOT NULL,
+email TEXT NOT NULL UNIQUE,
+password_hash TEXT NOT NULL,
+avatar_file TEXT NOT NULL,
+created_at TEXT NOT NULL
+```
+
+### Avatar Assets — Cloudflare R2
+
+The frontend expects avatar files named `image.png`, `image1.png`, `image2.png`, `image3.png`, and `image4.png`.
+Locally they are served from `/static`; in production you can publish the same filenames from an R2 public bucket and set `GUINE_AVATAR_BASE_URL` to that public base URL.
+
 ### Cloudflare as Traffic Shield (optional but recommended)
 
 - Point your backend domain through Cloudflare (proxied).
@@ -169,6 +208,8 @@ Upload an audio file for transcription.
 | Field | Type | Description |
 |---|---|---|
 | `file` | binary | Audio file (wav/mp3/m4a/ogg, ≤ 10 MB) |
+
+Requires an authenticated session cookie.
 
 **Response 200:**
 ```json
@@ -197,6 +238,27 @@ Upload an audio file for transcription.
 ```
 
 ---
+
+### `POST /auth/signup`
+
+Create a new account and start a session.
+
+**Request:**
+```json
+{ "name": "Ada", "email": "ada@example.com", "password": "secret123" }
+```
+
+### `POST /auth/login`
+
+Log in with an existing account.
+
+### `GET /auth/me`
+
+Returns the current user profile or `401` if no session is present.
+
+### `POST /auth/logout`
+
+Clears the session cookie.
 
 ### `GET /metrics`
 
@@ -240,6 +302,7 @@ Tests cover:
 - GPU-accelerated faster-whisper (CUDA)
 - WebSocket streaming transcription
 - Auth via API keys (FastAPI dependency injection)
+- Authenticated login/signup flow backed by cookie sessions
 - Redis-backed rate limiter for multi-instance deployments
 - OpenTelemetry tracing
 - Larger whisper models selectable via query param
