@@ -157,6 +157,15 @@ docker run -p 8000:8000 -e WORKERS=8 guine
    ```
 4. Add system packages: `ffmpeg`, `flac`.
 5. Set the port to `8000`.
+6. Add environment variables for cross-origin auth from Pages:
+   ```
+   GUINE_SESSION_SECRET=<long-random-secret>
+   GUINE_SESSION_SAME_SITE=none
+   GUINE_SESSION_HTTPS_ONLY=true
+   GUINE_ALLOWED_ORIGINS=https://<your-pages-domain>
+   ```
+
+If you use a custom Pages domain that is not `*.pages.dev`, include it in `GUINE_ALLOWED_ORIGINS`.
 
 ### Frontend — Cloudflare Pages
 

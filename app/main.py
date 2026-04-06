@@ -36,6 +36,31 @@ SESSION_SAME_SITE = os.environ.get("GUINE_SESSION_SAME_SITE", "lax")
 SESSION_HTTPS_ONLY = os.environ.get("GUINE_SESSION_HTTPS_ONLY", "false").lower() == "true"
 
 
+def _parse_allowed_origins() -> list[str]:
+    defaults = [
+        "https://guine.fastapicloud.dev",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
+    configured = os.environ.get("GUINE_ALLOWED_ORIGINS", "")
+    extra = [value.strip() for value in configured.split(",") if value.strip()]
+
+    merged: list[str] = []
+    for origin in defaults + extra:
+        if origin not in merged:
+            merged.append(origin)
+    return merged
+
+
+ALLOWED_ORIGINS = _parse_allowed_origins()
+ALLOWED_ORIGIN_REGEX = os.environ.get(
+    "GUINE_ALLOWED_ORIGIN_REGEX",
+    r"^https://([a-z0-9-]+\.)?pages\.dev$",
+)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     worker_task = asyncio.create_task(audio_queue.worker())
@@ -67,12 +92,8 @@ FRONTEND_STATIC = Path(__file__).resolve().parent.parent / "frontend" / "static"
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://guine.fastapicloud.dev",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
-    allow_origin_regex=r"^https://([a-z0-9-]+\.)?pages\.dev$",
+    allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=ALLOWED_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
