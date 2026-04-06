@@ -51,7 +51,12 @@ FRONTEND_STATIC = Path(__file__).resolve().parent.parent / "frontend" / "static"
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://guine.fastapicloud.dev",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
+    allow_origin_regex=r"^https://([a-z0-9-]+\.)?pages\.dev$",
     allow_credentials=False,
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
