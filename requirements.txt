@@ -10,3 +10,4 @@ anyio[asyncio]>=4.4.0
 pytest-anyio>=0.0.0
 fastapi[standard]
 itsdangerous
+python-dotenv

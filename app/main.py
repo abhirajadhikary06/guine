@@ -166,6 +166,7 @@ async def health():
     return {
         "status": "ok",
         "queue_size": audio_queue.queue.qsize(),
+        "storage_backend": "d1" if getattr(user_store, "_use_d1", False) else "sqlite",
     }
 
 

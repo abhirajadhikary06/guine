@@ -123,6 +123,11 @@ Authentication uses cookie sessions. If the frontend and backend are on differen
 - `GUINE_SESSION_HTTPS_ONLY=true`
 - `GUINE_AVATAR_BASE_URL=https://<your-r2-public-base>/avatars` if you move avatar files to R2
 
+For Cloudflare D1 access, create a **custom API token** with:
+- Account scope for your account only
+- D1 permission set to **Edit** for signup/login writes
+- D1 permission set to **Read** is not enough for signup because inserts need write access
+
 ---
 
 ## Docker Setup
