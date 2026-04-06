@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guine — Speech to Text</title>
+  <link rel="icon" type="image/x-icon" href="/static/favicon.ico?v=1.0.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Unbounded:wght@700;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black:   #0d0d0d;
+      --white:   #fafaf5;
+      --pink:    #ff3cac;
+      --blue:    #2979ff;
+      --lime:    #c6f135;
+      --orange:  #ff6b2b;
+      --purple:  #7c3aed;
+      --cyan:    #00e5ff;
+      --yellow:  #ffe033;
+      --bw:      3px solid var(--black);
+      --bw4:     4px solid var(--black);
+      --r:       14px;
+      --mono:    'DM Mono', monospace;
+      --display: 'Unbounded', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--white);
+      color: var(--black);
+      font-family: var(--mono);
+      font-size: 14px;
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    /* ── MARQUEE ─────────────────────────────── */
+    .marquee-wrap {
+      background: var(--black);
+      overflow: hidden;
+      white-space: nowrap;
+      padding: 11px 0;
+      border-bottom: var(--bw);
+    }
+    .marquee-track {
+      display: inline-flex;
+      animation: marquee 22s linear infinite;
+    }
+    .marquee-item {
+      font-family: var(--display);
+      font-size: 0.68rem;
+      letter-spacing: 0.18em;
+      color: var(--lime);
+      padding: 0 44px;
+      text-transform: uppercase;
+    }
+    .mdot { color: var(--pink); margin: 0 4px; }
+    @keyframes marquee {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* ── HEADER ──────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 48px;
+      border-bottom: var(--bw);
+      background: var(--black);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo {
+      display: block;
+      height: 44px;
+      width: auto;
+      max-width: 180px;
+      object-fit: contain;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .view-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--purple);
+      border: 3px solid var(--lime);
+      border-radius: 999px;
+      padding: 6px 16px;
+      font-family: var(--display);
+      font-size: 0.65rem;
+      color: var(--lime);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    #view-num { color: #fff; font-weight: 700; }
+    .ver-pill {
+      background: transparent;
+      border: 3px solid #333;
+      border-radius: 999px;
+      padding: 5px 14px;
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      color: #777;
+      text-transform: uppercase;
+      font-family: var(--mono);
+    }
+
+    /* ── HERO ────────────────────────────────── */
+    .hero {
+      background: var(--black);
+      border-bottom: var(--bw);
+      padding: 80px 48px 72px;
+    }
+    .hero-inner {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 64px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--pink);
+      border: var(--bw4);
+      border-color: var(--pink);
+      border-radius: var(--r);
+      color: var(--black);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 7px 16px;
+      margin-bottom: 26px;
+      box-shadow: 4px 4px 0 var(--pink);
+      animation: floatY 3.2s ease-in-out infinite;
+    }
+    @keyframes floatY {
+      0%,100% { transform: translateY(0px); }
+      50%      { transform: translateY(-6px); }
+    }
+
+    .hero-title {
+      font-family: var(--display);
+      font-size: clamp(2.8rem, 6vw, 5rem);
+      font-weight: 900;
+      color: var(--white);
+      line-height: 1.02;
+      letter-spacing: -0.02em;
+      margin-bottom: 22px;
+    }
+    .hl-pink  { color: var(--pink); }
+    .hl-lime  { color: var(--lime); }
+    .hl-cyan  { color: var(--cyan); }
+
+    .hero-sub {
+      font-family: var(--mono);
+      font-size: 0.88rem;
+      color: #aaa;
+      max-width: 460px;
+      line-height: 1.75;
+    }
+
+    .hero-badges {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .hbadge {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 22px;
+      border: var(--bw4);
+      border-radius: var(--r);
+      font-family: var(--display);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 700;
+      min-width: 210px;
+      color: var(--black);
+      animation: floatY 3.2s ease-in-out infinite;
+    }
+    .hbadge:nth-child(1) { background: var(--lime);   box-shadow: 5px 5px 0 var(--black); animation-delay: 0.0s; }
+    .hbadge:nth-child(2) { background: var(--orange); box-shadow: 5px 5px 0 var(--black); animation-delay: 0.5s; }
+    .hbadge:nth-child(3) { background: var(--cyan);   box-shadow: 5px 5px 0 var(--black); animation-delay: 1.0s; }
+
+    /* ── FEATURES STRIP ──────────────────────── */
+    .features-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-bottom: var(--bw);
+    }
+    .ft {
+      padding: 36px 40px;
+      border-right: var(--bw);
+      transition: transform 0.15s;
+    }
+    .ft:last-child { border-right: none; }
+    .ft:hover { transform: translateY(-4px); }
+    .ft:nth-child(1) { background: var(--pink); }
+    .ft:nth-child(2) { background: var(--blue); }
+    .ft:nth-child(3) { background: var(--lime); }
+
+    .ft-icon-wrap {
+      width: 52px; height: 52px;
+      border: var(--bw4);
+      border-radius: var(--r);
+      background: rgba(255,255,255,0.22);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+    }
+
+    .ft-title {
+      font-family: var(--display);
+      font-size: 1rem;
+      letter-spacing: 0.07em;
+      margin-bottom: 8px;
+      color: var(--black);
+    }
+    .ft:nth-child(2) .ft-title { color: #fff; }
+    .ft-desc {
+      font-size: 0.75rem;
+      line-height: 1.65;
+      color: rgba(0,0,0,0.65);
+    }
+    .ft:nth-child(2) .ft-desc { color: rgba(255,255,255,0.75); }
+
+    /* ── APP AREA ────────────────────────────── */
+    .app-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    .panel {
+      padding: 52px 48px;
+      border-right: var(--bw);
+    }
+    .panel:last-child { border-right: none; }
+
+    .panel-label {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 36px;
+    }
+    .panel-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px; height: 38px;
+      border: var(--bw4);
+      border-radius: 10px;
+      font-family: var(--mono);
+      font-weight: 500;
+      font-size: 0.82rem;
+      flex-shrink: 0;
+    }
+    #upload-panel .panel-num { background: var(--orange); }
+    #output-panel .panel-num { background: var(--cyan); }
+
+    .panel-title {
+      font-family: var(--display);
+      font-size: 1.2rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* ── DROP ZONE ───────────────────────────── */
+    #drop-zone {
+      border: 4px dashed var(--black);
+      border-radius: var(--r);
+      padding: 56px 24px;
+      text-align: center;
+      cursor: pointer;
+      background: var(--white);
+      transition: background 0.15s, transform 0.14s, box-shadow 0.14s;
+      user-select: none;
+    }
+    #drop-zone:hover, #drop-zone.dragover {
+      background: var(--lime);
+      transform: translate(-4px, -4px);
+      box-shadow: 8px 8px 0 var(--black);
+    }
+    .dz-icon {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+      transition: transform 0.22s;
+    }
+    #drop-zone:hover .dz-icon { transform: scale(1.12) rotate(-5deg); }
+    .drop-title {
+      font-family: var(--display);
+      font-size: 1.15rem;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+    .drop-hint {
+      font-size: 0.72rem;
+      color: #777;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    #file-input { display: none; }
+
+    /* ── FILE INFO ───────────────────────────── */
+    #file-info {
+      display: none;
+      margin-top: 18px;
+      padding: 14px 18px;
+      border: var(--bw4);
+      border-radius: var(--r);
+      background: var(--yellow);
+      box-shadow: 5px 5px 0 var(--black);
+    }
+    .file-name { font-weight: 500; word-break: break-all; font-size: 0.85rem; }
+    .file-meta { color: #444; margin-top: 4px; font-size: 0.74rem; }
+
+    .limits-note {
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+      color: #888;
+      text-transform: uppercase;
+      margin-top: 14px;
+      line-height: 1.7;
+    }
+    .limits-note b { color: var(--black); }
+
+    .divider { border: none; border-top: var(--bw); margin: 28px 0; }
+
+    /* ── BUTTON ──────────────────────────────── */
+    #transcribe-btn {
+      display: block;
+      width: 100%;
+      padding: 18px 28px;
+      border: var(--bw4);
+      border-radius: var(--r);
+      background: var(--pink);
+      color: var(--black);
+      font-family: var(--display);
+      font-size: 1.1rem;
+      letter-spacing: 0.14em;
+      cursor: pointer;
+      box-shadow: 6px 6px 0 var(--black);
+      transition: transform 0.12s, box-shadow 0.12s;
+      position: relative;
+      overflow: hidden;
+    }
+    #transcribe-btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--lime);
+      border-radius: var(--r);
+      transform: translateX(-110%);
+      transition: transform 0.28s ease;
+      z-index: 0;
+    }
+    #transcribe-btn:hover:not(:disabled)::after { transform: translateX(0); }
+    #transcribe-btn .btn-inner { position: relative; z-index: 1; }
+    #transcribe-btn:hover:not(:disabled) {
+      transform: translate(-4px, -4px);
+      box-shadow: 10px 10px 0 var(--black);
+    }
+    #transcribe-btn:active:not(:disabled) {
+      transform: translate(2px, 2px);
+      box-shadow: 3px 3px 0 var(--black);
+    }
+    #transcribe-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* ── STATUS ──────────────────────────────── */
+    #status {
+      display: none;
+      margin-top: 18px;
+      padding: 14px 18px;
+      border: var(--bw4);
+      border-radius: var(--r);
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+    #status.loading { background: var(--purple); color: var(--lime); }
+
+    .wave-bars {
+      display: flex; align-items: center; gap: 3px; height: 22px; flex-shrink: 0;
+    }
+    .wb {
+      width: 3px; border-radius: 2px;
+      background: var(--lime);
+      animation: wb 0.9s ease-in-out infinite;
+    }
+    .wb:nth-child(1){height:35%;animation-delay:.0s}
+    .wb:nth-child(2){height:75%;animation-delay:.1s}
+    .wb:nth-child(3){height:55%;animation-delay:.2s}
+    .wb:nth-child(4){height:100%;animation-delay:.3s}
+    .wb:nth-child(5){height:50%;animation-delay:.4s}
+    .wb:nth-child(6){height:80%;animation-delay:.5s}
+    .wb:nth-child(7){height:40%;animation-delay:.6s}
+    .wb:nth-child(8){height:90%;animation-delay:.7s}
+    @keyframes wb {
+      0%,100%{transform:scaleY(1)} 50%{transform:scaleY(0.25)}
+    }
+
+    /* ── ERROR ───────────────────────────────── */
+    #error-box {
+      display: none;
+      margin-top: 18px;
+      padding: 16px 18px;
+      border: var(--bw4);
+      border-color: var(--pink);
+      border-radius: var(--r);
+      background: #fff0f4;
+      box-shadow: 5px 5px 0 var(--pink);
+    }
+    .err-title {
+      font-family: var(--display);
+      font-size: 1rem;
+      color: var(--pink);
+      letter-spacing: 0.1em;
+      margin-bottom: 6px;
+    }
+    #error-text { font-size: 0.82rem; line-height: 1.5; }
+
+    /* ── OUTPUT BOX ──────────────────────────── */
+    #output-box {
+      width: 100%;
+      min-height: 290px;
+      border: var(--bw4);
+      border-radius: var(--r);
+      padding: 22px;
+      background: var(--white);
+      font-family: var(--mono);
+      font-size: 0.92rem;
+      line-height: 1.78;
+      resize: vertical;
+      outline: none;
+      color: var(--black);
+      transition: box-shadow 0.18s;
+    }
+    #output-box:focus { box-shadow: 0 0 0 4px var(--cyan); }
+    #output-box.has-content { background: #f6fff0; }
+
+    /* ── ENGINE BADGE ────────────────────────── */
+    #engine-badge {
+      display: none;
+      margin-top: 14px;
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #666;
+      align-items: center;
+      gap: 8px;
+    }
+    #engine-badge span {
+      padding: 4px 12px;
+      border: var(--bw);
+      border-radius: 999px;
+      font-weight: 500;
+      background: var(--purple);
+      color: var(--white);
+    }
+
+    /* ── CACHE ───────────────────────────────── */
+    #cache-notice {
+      display: none;
+      margin-top: 10px;
+      padding: 8px 14px;
+      border: 3px solid var(--cyan);
+      border-radius: var(--r);
+      background: #e8feff;
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #0097aa;
+      align-items: center;
+      gap: 7px;
+    }
+
+    /* ── COPY BTN ────────────────────────────── */
+    #copy-btn {
+      display: none;
+      margin-top: 16px;
+      padding: 11px 22px;
+      border: var(--bw4);
+      border-radius: var(--r);
+      background: var(--white);
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 5px 5px 0 var(--black);
+      transition: transform 0.12s, box-shadow 0.12s, background 0.12s;
+      align-items: center;
+      gap: 8px;
+    }
+    #copy-btn:hover {
+      transform: translate(-3px, -3px);
+      box-shadow: 8px 8px 0 var(--black);
+      background: var(--cyan);
+    }
+
+    /* ── FOOTER ──────────────────────────────── */
+    .rainbow-bar {
+      height: 7px;
+      background: linear-gradient(90deg, var(--pink) 0%, var(--orange) 20%, var(--yellow) 35%, var(--lime) 50%, var(--cyan) 65%, var(--blue) 82%, var(--purple) 100%);
+      border-top: var(--bw);
+    }
+    footer {
+      background: var(--black);
+      border-top: var(--bw);
+    }
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 48px;
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #555;
+    }
+    footer a { color: var(--lime); text-decoration: none; }
+    footer a:hover { color: var(--cyan); }
+
+    /* ── RESPONSIVE ──────────────────────────── */
+    @media (max-width: 900px) {
+      .hero-inner { grid-template-columns: 1fr; gap: 40px; }
+      .hero-badges { flex-direction: row; flex-wrap: wrap; }
+      .features-strip { grid-template-columns: 1fr; }
+      .ft { border-right: none; border-bottom: var(--bw); }
+      .ft:last-child { border-bottom: none; }
+      .app-section { grid-template-columns: 1fr; }
+      .panel { border-right: none; border-bottom: var(--bw); }
+      header { padding: 16px 24px; }
+      .logo { height: 36px; max-width: 150px; }
+      .hero { padding: 52px 24px 48px; }
+      .panel { padding: 40px 24px; }
+      .footer-inner { padding: 16px 24px; flex-direction: column; gap: 8px; }
+    }
+
+    /* ── ENTRANCE ────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up { animation: fadeUp 0.55s cubic-bezier(.22,1,.36,1) both; }
+    .fd1{animation-delay:.05s} .fd2{animation-delay:.15s}
+    .fd3{animation-delay:.25s} .fd4{animation-delay:.35s}
+  </style>
+</head>
+<body>
+
+<!-- MARQUEE -->
+<div class="marquee-wrap">
+  <div class="marquee-track">
+    <span class="marquee-item">Speech to Text <span class="mdot">✦</span></span>
+    <span class="marquee-item">Ultra Fast Engine <span class="mdot">✦</span></span>
+    <span class="marquee-item">WAV · MP3 · M4A · OGG <span class="mdot">✦</span></span>
+    <span class="marquee-item">30 Min Cache <span class="mdot">✦</span></span>
+    <span class="marquee-item">10 MB Max Size <span class="mdot">✦</span></span>
+    <span class="marquee-item">Rate Limit 5 / Min <span class="mdot">✦</span></span>
+    <span class="marquee-item">Speech to Text <span class="mdot">✦</span></span>
+    <span class="marquee-item">Ultra Fast Engine <span class="mdot">✦</span></span>
+    <span class="marquee-item">WAV · MP3 · M4A · OGG <span class="mdot">✦</span></span>
+    <span class="marquee-item">30 Min Cache <span class="mdot">✦</span></span>
+    <span class="marquee-item">10 MB Max Size <span class="mdot">✦</span></span>
+    <span class="marquee-item">Rate Limit 5 / Min <span class="mdot">✦</span></span>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <img src="/static/logo.png" alt="Guine" class="logo" />
+  <div class="header-right">
+    <div class="view-pill">
+      <!-- Eye SVG -->
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+        <ellipse cx="8" cy="8" rx="7" ry="5" stroke="var(--lime)" stroke-width="1.8"/>
+        <circle cx="8" cy="8" r="2.2" stroke="var(--lime)" stroke-width="1.8"/>
+      </svg>
+      <span id="view-num">100</span>&nbsp;views
+    </div>
+    <span class="ver-pill">v1.0.0</span>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="hero-eyebrow fade-up fd1">
+        <!-- Sparkle SVG -->
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+          <path d="M6.5 1v11M1 6.5h11M3.3 3.3l5.9 5.9M9.7 3.3L3.8 9.2" stroke="#000" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        AI-Powered Transcription
+      </div>
+      <h1 class="hero-title fade-up fd2">
+        Turn <span class="hl-pink">Sound</span><br>
+        Into <span class="hl-lime">Words</span><br>
+        <span class="hl-cyan">Instantly.</span>
+      </h1>
+      <p class="hero-sub fade-up fd3">Drop your audio file and get crisp, accurate transcriptions in seconds — no signup, no friction.</p>
+    </div>
+
+    <div class="hero-badges fade-up fd4">
+      <!-- Badge 1 -->
+      <div class="hbadge">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <path d="M9 2l1.8 5L16 9l-5.2 2L9 16l-1.8-5L2 9l5.2-2z" stroke="#000" stroke-width="1.8" stroke-linejoin="round"/>
+        </svg>
+        Zero Friction
+      </div>
+      <!-- Badge 2 -->
+      <div class="hbadge">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <circle cx="9" cy="9" r="7" stroke="#000" stroke-width="1.8"/>
+          <path d="M9 5.5V9.5l2.5 1.5" stroke="#000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Cached 30 Min
+      </div>
+      <!-- Badge 3 -->
+      <div class="hbadge">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <rect x="6" y="2" width="6" height="9" rx="3" stroke="#000" stroke-width="1.8"/>
+          <path d="M3 9c0 3.314 2.686 6 6 6s6-2.686 6-6" stroke="#000" stroke-width="1.8" stroke-linecap="round"/>
+          <line x1="9" y1="15" x2="9" y2="17" stroke="#000" stroke-width="1.8" stroke-linecap="round"/>
+          <line x1="6" y1="17" x2="12" y2="17" stroke="#000" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        Multi-Format
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES STRIP -->
+<div class="features-strip">
+  <div class="ft">
+    <div class="ft-icon-wrap">
+      <!-- Mic icon -->
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+        <rect x="8" y="2" width="10" height="14" rx="5" stroke="#000" stroke-width="2.2"/>
+        <path d="M4 13c0 4.97 4.03 9 9 9s9-4.03 9-9" stroke="#000" stroke-width="2.2" stroke-linecap="round"/>
+        <line x1="13" y1="22" x2="13" y2="25" stroke="#000" stroke-width="2.2" stroke-linecap="round"/>
+        <line x1="9" y1="25" x2="17" y2="25" stroke="#000" stroke-width="2.2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="ft-title">Any Audio Format</div>
+    <div class="ft-desc">WAV, MP3, M4A, OGG — all supported up to 10 MB per file.</div>
+  </div>
+  <div class="ft">
+    <div class="ft-icon-wrap">
+      <!-- Lightning icon -->
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+        <path d="M15 2L6 14h9l-4 10 14-14h-9z" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="ft-title">Fast &amp; Cached</div>
+    <div class="ft-desc">Smart local cache returns instant results for repeated uploads (30 min TTL).</div>
+  </div>
+  <div class="ft">
+    <div class="ft-icon-wrap">
+      <!-- Copy icon -->
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+        <rect x="9" y="2" width="14" height="18" rx="3" stroke="#000" stroke-width="2.2"/>
+        <rect x="3" y="7" width="14" height="18" rx="3" fill="var(--lime)" stroke="#000" stroke-width="2.2"/>
+        <line x1="7" y1="14" x2="13" y2="14" stroke="#000" stroke-width="2" stroke-linecap="round"/>
+        <line x1="7" y1="18" x2="13" y2="18" stroke="#000" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="ft-title">One-Click Copy</div>
+    <div class="ft-desc">Copy your transcription to clipboard instantly and paste it anywhere.</div>
+  </div>
+</div>
+
+<!-- APP SECTION -->
+<div class="app-section">
+
+  <!-- LEFT: UPLOAD -->
+  <section class="panel" id="upload-panel">
+    <div class="panel-label">
+      <span class="panel-num">01</span>
+      <span class="panel-title">Upload Audio</span>
+    </div>
+
+    <div id="drop-zone" role="button" tabindex="0" aria-label="Upload audio file">
+      <div class="dz-icon">
+        <!-- Large mic SVG — no emojis, clean lines -->
+        <svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="24" y="7" width="24" height="36" rx="12" stroke="#0d0d0d" stroke-width="3.5"/>
+          <!-- grille lines -->
+          <line x1="28" y1="18" x2="44" y2="18" stroke="#0d0d0d" stroke-width="2" opacity="0.25" stroke-linecap="round"/>
+          <line x1="28" y1="25" x2="44" y2="25" stroke="#0d0d0d" stroke-width="2" opacity="0.25" stroke-linecap="round"/>
+          <line x1="28" y1="32" x2="44" y2="32" stroke="#0d0d0d" stroke-width="2" opacity="0.25" stroke-linecap="round"/>
+          <!-- stand arc -->
+          <path d="M12 36c0 13.255 10.745 24 24 24s24-10.745 24-24" stroke="#0d0d0d" stroke-width="3.5" stroke-linecap="round"/>
+          <!-- pole + base -->
+          <line x1="36" y1="60" x2="36" y2="68" stroke="#0d0d0d" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="22" y1="68" x2="50" y2="68" stroke="#0d0d0d" stroke-width="3.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="drop-title">Drop audio here</div>
+      <div class="drop-hint">or click to browse</div>
+    </div>
+    <input type="file" id="file-input" accept=".wav,.mp3,.m4a,.ogg,audio/*" />
+
+    <div id="file-info">
+      <div class="file-name" id="file-name-text">—</div>
+      <div class="file-meta" id="file-meta-text">—</div>
+    </div>
+
+    <p class="limits-note">
+      Accepted: <b>WAV · MP3 · M4A · OGG</b><br>
+      Max: <b>10 MB</b> &nbsp;·&nbsp; Rate limit: <b>5 / min</b>
+    </p>
+
+    <div class="divider"></div>
+
+    <button id="transcribe-btn" disabled>
+      <div class="btn-inner">TRANSCRIBE →</div>
+    </button>
+
+    <div id="status">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="wave-bars">
+          <div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div>
+          <div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div>
+        </div>
+        Processing audio...
+      </div>
+    </div>
+
+    <div id="error-box">
+      <div class="err-title">ERROR</div>
+      <div id="error-text">Something went wrong.</div>
+    </div>
+  </section>
+
+  <!-- RIGHT: OUTPUT -->
+  <section class="panel" id="output-panel">
+    <div class="panel-label">
+      <span class="panel-num">02</span>
+      <span class="panel-title">Transcription</span>
+    </div>
+
+    <textarea id="output-box" readonly placeholder="Your transcription will appear here…"></textarea>
+
+    <div id="engine-badge">
+      Engine:&nbsp;<span id="engine-name">—</span>
+    </div>
+
+    <div id="cache-notice">
+      <!-- Lightning small -->
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <path d="M7 1L3 7h4l-2 4 7-6H8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+      </svg>
+      Returned from cache — 30 min TTL
+    </div>
+
+    <button id="copy-btn" onclick="copyResult()">
+      <!-- Copy small SVG -->
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+        <rect x="5" y="1" width="9" height="11" rx="2.5" stroke="currentColor" stroke-width="1.8"/>
+        <rect x="1" y="4" width="9" height="11" rx="2.5" fill="var(--white)" stroke="currentColor" stroke-width="1.8"/>
+      </svg>
+      Copy to clipboard
+    </button>
+  </section>
+</div>
+
+<!-- FOOTER -->
+<div class="rainbow-bar"></div>
+<footer>
+  <div class="footer-inner">
+    <span>Guine &copy; 2025 — Speech-to-Text Engine</span>
+    <span>
+      <a href="/health" target="_blank">Health</a>
+      &nbsp;·&nbsp;
+      <a href="/metrics" target="_blank">Metrics</a>
+    </span>
+  </div>
+</footer>
+
+<script>
+  // ── VIEW COUNTER ─────────────────────────────
+  const viewNumEl = document.getElementById('view-num');
+  let stored = parseInt(localStorage.getItem('guine_views') || '99');
+  stored += 1;
+  localStorage.setItem('guine_views', stored);
+  let cur = stored - 1;
+  const ticker = setInterval(() => {
+    cur++;
+    viewNumEl.textContent = cur.toLocaleString();
+    if (cur >= stored) clearInterval(ticker);
+  }, 55);
+
+  // ── CONFIG ───────────────────────────────────
+  const API_URL = (window.GUINE_API_URL || '').replace(/\/$/, '') || '';
+  const CACHE_TTL_MS = 30 * 60 * 1000;
+
+  let selectedFile = null;
+
+  const dropZone    = document.getElementById('drop-zone');
+  const fileInput   = document.getElementById('file-input');
+  const fileInfo    = document.getElementById('file-info');
+  const fileNameEl  = document.getElementById('file-name-text');
+  const fileMetaEl  = document.getElementById('file-meta-text');
+  const btn         = document.getElementById('transcribe-btn');
+  const statusEl    = document.getElementById('status');
+  const errorBox    = document.getElementById('error-box');
+  const errorText   = document.getElementById('error-text');
+  const outputBox   = document.getElementById('output-box');
+  const engineBadge = document.getElementById('engine-badge');
+  const engineName  = document.getElementById('engine-name');
+  const cacheNotice = document.getElementById('cache-notice');
+  const copyBtn     = document.getElementById('copy-btn');
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('dragover');
+    const f = e.dataTransfer.files[0]; if (f) handleFile(f);
+  });
+  fileInput.addEventListener('change', () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
+
+  function handleFile(file) {
+    clearError(); clearOutput();
+    const EXT  = ['wav','mp3','m4a','ogg'];
+    const MIME = ['audio/wav','audio/mpeg','audio/mp4','audio/ogg','audio/wave','audio/x-wav','audio/mp3','audio/m4a','audio/x-m4a'];
+    const ext  = file.name.split('.').pop().toLowerCase();
+    if (!MIME.includes(file.type) && !EXT.includes(ext)) { showError(`Unsupported type: ${file.type||ext}. Use WAV, MP3, M4A or OGG.`); return; }
+    if (file.size > 10*1024*1024) { showError(`Too large: ${formatBytes(file.size)}. Max is 10 MB.`); return; }
+    selectedFile = file;
+    fileNameEl.textContent = file.name;
+    fileMetaEl.textContent = `${formatBytes(file.size)} · ${file.type||ext.toUpperCase()}`;
+    fileInfo.style.display = 'block';
+    btn.disabled = false;
+  }
+
+  async function hashFile(f) {
+    const buf = await f.arrayBuffer();
+    const h   = await crypto.subtle.digest('SHA-256', buf);
+    return Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+
+  function getCached(hash) {
+    try {
+      const raw = localStorage.getItem(`guine_${hash}`);
+      if (!raw) return null;
+      const e = JSON.parse(raw);
+      if (Date.now() > e.expires) { localStorage.removeItem(`guine_${hash}`); return null; }
+      return e;
+    } catch { return null; }
+  }
+  function setCache(hash, transcription, engine) {
+    try { localStorage.setItem(`guine_${hash}`, JSON.stringify({transcription, engine, expires: Date.now()+CACHE_TTL_MS})); } catch {}
+  }
+
+  btn.addEventListener('click', async () => {
+    if (!selectedFile) return;
+    setLoading(true); clearError(); clearOutput();
+    cacheNotice.style.display = 'none';
+    try {
+      const hash   = await hashFile(selectedFile);
+      const cached = getCached(hash);
+      if (cached) { showResult(cached.transcription, cached.engine, true); setLoading(false); return; }
+      const fd = new FormData(); fd.append('file', selectedFile);
+      const res  = await fetch(`${API_URL}/stt`, {method:'POST', body:fd});
+      const data = await res.json().catch(() => ({detail:'Invalid server response.'}));
+      if (!res.ok) throw new Error(data.detail||`Server error: ${res.status}`);
+      const text   = data.transcription?.text ?? data.transcription ?? '';
+      const engine = data.engine || 'unknown';
+      setCache(hash, text, engine);
+      showResult(text, engine, false);
+    } catch (err) {
+      showError(err.message||'Network error — is the backend reachable?');
+    } finally {
+      setLoading(false);
+    }
+  });
+
+  function setLoading(on) {
+    btn.disabled = on;
+    statusEl.style.display = on ? 'block' : 'none';
+    statusEl.className     = on ? 'loading' : '';
+  }
+  function showResult(text, engine, fromCache) {
+    outputBox.value = text || '(empty transcription)';
+    outputBox.classList.add('has-content');
+    engineName.textContent = engine;
+    engineBadge.style.display = 'flex';
+    copyBtn.style.display     = 'inline-flex';
+    if (fromCache) cacheNotice.style.display = 'flex';
+  }
+  function clearOutput() {
+    outputBox.value = '';
+    outputBox.classList.remove('has-content');
+    engineBadge.style.display = 'none';
+    copyBtn.style.display     = 'none';
+  }
+  function showError(msg) { errorText.textContent = msg; errorBox.style.display = 'block'; }
+  function clearError()   { errorBox.style.display = 'none'; errorText.textContent = ''; }
+  function formatBytes(b) {
+    if (b < 1024) return `${b} B`;
+    if (b < 1048576) return `${(b/1024).toFixed(1)} KB`;
+    return `${(b/1048576).toFixed(2)} MB`;
+  }
+  function copyResult() {
+    if (!outputBox.value) return;
+    navigator.clipboard.writeText(outputBox.value).then(() => {
+      copyBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2.5 7.5l4 4 6-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Copied!`;
+      setTimeout(() => {
+        copyBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="5" y="1" width="9" height="11" rx="2.5" stroke="currentColor" stroke-width="1.8"/><rect x="1" y="4" width="9" height="11" rx="2.5" fill="var(--white)" stroke="currentColor" stroke-width="1.8"/></svg> Copy to clipboard`;
+      }, 2000);
+    });
+  }
+</script>
+</body>
+</html>
