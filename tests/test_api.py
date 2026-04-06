@@ -97,6 +97,27 @@ async def test_signup_login_and_me(client):
 
 
 @pytest.mark.anyio
+async def test_daily_quota_visible(client):
+    await sign_up(client, email="quota@example.com")
+
+    quota = await client.get("/auth/quota")
+    assert quota.status_code == 200
+    payload = quota.json()
+    assert "daily_limit" in payload
+    assert payload["daily_limit"]["max"] == 5
+    assert "remaining" in payload["daily_limit"]
+
+    wav_bytes = make_wav(100)
+    files = {"file": ("test.wav", wav_bytes, "audio/wav")}
+    res = await client.post("/stt", files=files)
+    assert res.status_code in (200, 500)
+    if res.status_code == 200:
+        body = res.json()
+        assert "daily_limit" in body
+        assert "remaining" in body["daily_limit"]
+
+
+@pytest.mark.anyio
 async def test_metrics_endpoint(client):
     res = await client.get("/metrics")
     assert res.status_code == 200

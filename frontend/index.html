@@ -580,6 +580,71 @@
     }
     .limits-note b { color: var(--black); }
 
+    .quota-chip {
+      margin-top: 12px;
+      border: var(--bw4);
+      border-radius: var(--r);
+      padding: 10px 12px;
+      background: linear-gradient(135deg, #eefcf2 0%, #d8ffe7 100%);
+      box-shadow: 4px 4px 0 var(--black);
+      display: none;
+      color: #113824;
+    }
+    .quota-chip.warn {
+      background: linear-gradient(135deg, #fff6dc 0%, #ffe7b0 100%);
+      color: #7a3f00;
+    }
+    .quota-chip.danger {
+      background: linear-gradient(135deg, #ffe8ee 0%, #ffc9d6 100%);
+      color: #8b0000;
+    }
+    .quota-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .quota-title {
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+      font-weight: 700;
+      opacity: 0.92;
+    }
+    .quota-count {
+      font-family: var(--display);
+      font-size: 0.92rem;
+      letter-spacing: 0.03em;
+      line-height: 1;
+    }
+    .quota-meter {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .quota-seg {
+      height: 10px;
+      border: var(--bw);
+      border-radius: 999px;
+      background: #ffffff;
+      opacity: 0.35;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .quota-seg.on {
+      opacity: 1;
+      transform: translateY(-1px);
+      background: currentColor;
+    }
+    .quota-foot {
+      font-size: 0.62rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+      opacity: 0.92;
+    }
+
     .divider { border: none; border-top: var(--bw); margin: 28px 0; }
 
     /* ── BUTTON ──────────────────────────────── */
@@ -1037,6 +1102,14 @@
       Accepted: <b>WAV · MP3 · M4A · OGG</b><br>
       Max: <b>10 MB</b> &nbsp;·&nbsp; Rate limit: <b>5 / min</b>
     </p>
+    <div id="quota-chip" class="quota-chip" aria-live="polite">
+      <div class="quota-head">
+        <span class="quota-title">Daily Generations</span>
+        <span id="quota-count" class="quota-count">—</span>
+      </div>
+      <div id="quota-meter" class="quota-meter"></div>
+      <div id="quota-foot" class="quota-foot">—</div>
+    </div>
 
     <div class="divider"></div>
 
@@ -1138,6 +1211,10 @@
   const authPreviewAvatar = document.getElementById('auth-preview-avatar');
   const authPreviewName = document.getElementById('auth-preview-name');
   const authPreviewEmail = document.getElementById('auth-preview-email');
+  const quotaChip = document.getElementById('quota-chip');
+  const quotaCount = document.getElementById('quota-count');
+  const quotaMeter = document.getElementById('quota-meter');
+  const quotaFoot = document.getElementById('quota-foot');
 
   const AUDIO_EXTENSIONS = ['wav', 'mp3', 'm4a', 'ogg'];
   const AUDIO_MIME_TYPES = ['audio/wav', 'audio/mpeg', 'audio/mp4', 'audio/ogg', 'audio/wave', 'audio/x-wav', 'audio/mp3', 'audio/m4a', 'audio/x-m4a'];
@@ -1145,6 +1222,67 @@
   let selectedFile = null;
   let currentUser = null;
   let activeAuthMode = 'login';
+  let dailyQuota = null;
+
+  function formatDuration(seconds) {
+    const s = Math.max(0, Number(seconds) || 0);
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    if (h > 0) return `${h}h ${m}m`;
+    return `${m}m`;
+  }
+
+  function updateQuotaChip() {
+    if (!dailyQuota || !currentUser) {
+      quotaChip.style.display = 'none';
+      quotaChip.classList.remove('warn', 'danger');
+      quotaCount.textContent = '—';
+      quotaMeter.innerHTML = '';
+      quotaFoot.textContent = '—';
+      return;
+    }
+    const remaining = Number(dailyQuota.remaining ?? 0);
+    const max = Number(dailyQuota.max ?? 5);
+    const retryAfter = Number(dailyQuota.retry_after_seconds ?? 0);
+    quotaChip.style.display = 'block';
+    quotaChip.classList.remove('warn', 'danger');
+    const safeMax = Math.max(1, max);
+    const clampedRemaining = Math.max(0, Math.min(remaining, safeMax));
+
+    quotaCount.textContent = `${clampedRemaining}/${safeMax}`;
+
+    let meterHtml = '';
+    for (let index = 0; index < safeMax; index += 1) {
+      const on = index < clampedRemaining ? ' on' : '';
+      meterHtml += `<span class="quota-seg${on}"></span>`;
+    }
+    quotaMeter.innerHTML = meterHtml;
+
+    if (remaining <= 0) {
+      quotaChip.classList.add('danger');
+      quotaFoot.textContent = `Reset in ${formatDuration(retryAfter)}`;
+      return;
+    }
+    if (remaining <= 1) {
+      quotaChip.classList.add('warn');
+      quotaFoot.textContent = 'Last generation remaining';
+      return;
+    }
+    quotaFoot.textContent = `Resets in ${formatDuration(retryAfter)}`;
+  }
+
+  async function refreshQuota() {
+    if (!currentUser) return;
+    try {
+      const data = await requestJSON('/auth/quota');
+      if (data && data.daily_limit) {
+        dailyQuota = data.daily_limit;
+        updateQuotaChip();
+      }
+    } catch {
+      // Ignore quota refresh errors to avoid noisy UI.
+    }
+  }
 
   function setAuthStatus(message, tone = 'normal') {
     authStatus.textContent = message || '';
@@ -1172,10 +1310,12 @@
     authPreviewAvatar.alt = `${user.name} avatar`;
     authPreviewName.textContent = user.name;
     authPreviewEmail.textContent = user.email;
+    updateQuotaChip();
   }
 
   function setLoggedOutState() {
     currentUser = null;
+    dailyQuota = null;
     document.body.classList.add('locked');
     authShell.hidden = false;
     profileChip.hidden = true;
@@ -1187,6 +1327,7 @@
     authPreviewAvatar.alt = 'Preview avatar';
     authPreviewName.textContent = 'Guest user';
     authPreviewEmail.textContent = 'Awaiting sign in';
+    updateQuotaChip();
     resetTranscriptionState();
   }
 
@@ -1264,6 +1405,7 @@
     try {
       const data = await requestJSON('/auth/me');
       setAuthenticatedUser(data.user);
+      await refreshQuota();
     } catch {
       setLoggedOutState();
     }
@@ -1281,6 +1423,12 @@
         body: JSON.stringify(payload),
       });
       setAuthenticatedUser(data.user);
+      if (data.daily_limit) {
+        dailyQuota = data.daily_limit;
+        updateQuotaChip();
+      } else {
+        await refreshQuota();
+      }
       setAuthStatus('Signed in.', 'success');
       form.reset();
       resetTranscriptionState();
@@ -1373,7 +1521,16 @@
       });
       const data = await response.json().catch(() => ({ detail: 'Invalid server response.' }));
       if (!response.ok) {
+        if (data && data.daily_limit) {
+          dailyQuota = data.daily_limit;
+          updateQuotaChip();
+        }
         throw new Error(data.detail || `Server error: ${response.status}`);
+      }
+
+      if (data && data.daily_limit) {
+        dailyQuota = data.daily_limit;
+        updateQuotaChip();
       }
 
       const text = data.transcription?.text ?? data.transcription ?? '';

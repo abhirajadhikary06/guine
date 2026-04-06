@@ -28,3 +28,22 @@ class RateLimiter:
                 return False
             self._store[ip].append(now)
             return True
+
+    def remaining(self, key: str) -> int:
+        now = time.monotonic()
+        cutoff = now - self.window_seconds
+        with self._lock:
+            timestamps = [t for t in self._store[key] if t > cutoff]
+            self._store[key] = timestamps
+            return max(0, self.max_requests - len(timestamps))
+
+    def retry_after_seconds(self, key: str) -> int:
+        now = time.monotonic()
+        cutoff = now - self.window_seconds
+        with self._lock:
+            timestamps = [t for t in self._store[key] if t > cutoff]
+            self._store[key] = timestamps
+            if len(timestamps) < self.max_requests:
+                return 0
+            oldest = min(timestamps)
+            return max(1, int((oldest + self.window_seconds) - now))

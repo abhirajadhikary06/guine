@@ -28,6 +28,7 @@ ALLOWED_TYPES = {"audio/wav", "audio/mpeg", "audio/mp4", "audio/ogg", "audio/x-w
 
 audio_queue = AudioQueue()
 rate_limiter = RateLimiter(max_requests=5, window_seconds=60)
+daily_user_limiter = RateLimiter(max_requests=5, window_seconds=24 * 60 * 60)
 user_store = UserStore()
 SESSION_COOKIE = os.environ.get("GUINE_SESSION_COOKIE", "guine_session")
 SESSION_SECRET_KEY = os.environ.get("GUINE_SESSION_SECRET", "change-me-in-production")
@@ -113,8 +114,14 @@ def _require_user(request: Request):
 
 
 def _auth_payload(user):
+    user_key = f"user:{user.id}"
     return {
         "user": user.to_public_dict(),
+        "daily_limit": {
+            "max": daily_user_limiter.max_requests,
+            "remaining": daily_user_limiter.remaining(user_key),
+            "retry_after_seconds": daily_user_limiter.retry_after_seconds(user_key),
+        },
     }
 
 
@@ -161,6 +168,19 @@ async def auth_logout(request: Request):
     return {"ok": True}
 
 
+@app.get("/auth/quota")
+async def auth_quota(request: Request):
+    user = _require_user(request)
+    user_key = f"user:{user.id}"
+    return {
+        "daily_limit": {
+            "max": daily_user_limiter.max_requests,
+            "remaining": daily_user_limiter.remaining(user_key),
+            "retry_after_seconds": daily_user_limiter.retry_after_seconds(user_key),
+        }
+    }
+
+
 @app.get("/health")
 async def health():
     return {
@@ -190,10 +210,18 @@ async def speech_to_text(request: Request, file: UploadFile = File(...)):
     TOTAL_REQUESTS.inc()
 
     try:
-        _require_user(request)
+        user = _require_user(request)
     except HTTPException:
         FAILED_REQUESTS.inc()
         raise
+
+    user_key = f"user:{user.id}"
+    if not daily_user_limiter.allow(user_key):
+        FAILED_REQUESTS.inc()
+        raise HTTPException(
+            status_code=429,
+            detail="Daily generation limit exceeded. Max 5 requests per 24 hours.",
+        )
 
     client_ip = request.client.host if request.client else "unknown"
     if not rate_limiter.allow(client_ip):
@@ -245,5 +273,21 @@ async def speech_to_text(request: Request, file: UploadFile = File(...)):
         QUEUE_SIZE.set(audio_queue.queue.qsize())
 
     if isinstance(result, dict):
-        return {"transcription": result, "engine": result.get("engine", "unknown")}
-    return {"transcription": {"text": str(result), "engine": "unknown"}, "engine": "unknown"}
+        return {
+            "transcription": result,
+            "engine": result.get("engine", "unknown"),
+            "daily_limit": {
+                "max": daily_user_limiter.max_requests,
+                "remaining": daily_user_limiter.remaining(user_key),
+                "retry_after_seconds": daily_user_limiter.retry_after_seconds(user_key),
+            },
+        }
+    return {
+        "transcription": {"text": str(result), "engine": "unknown"},
+        "engine": "unknown",
+        "daily_limit": {
+            "max": daily_user_limiter.max_requests,
+            "remaining": daily_user_limiter.remaining(user_key),
+            "retry_after_seconds": daily_user_limiter.retry_after_seconds(user_key),
+        },
+    }
