@@ -6,15 +6,13 @@
   <title>Guine — Speech to Text</title>
   <link rel="icon" type="image/x-icon" href="/static/favicon.ico?v=1.0.0" />
   <script>
-    // Default to same-origin. Override only when testing against a separate backend.
+    // Default to deployed FastAPI backend. Keep localhost for local development.
     if (!window.GUINE_API_URL) {
       const hostname = window.location.hostname;
       if (hostname === 'localhost' || hostname === '127.0.0.1') {
         window.GUINE_API_URL = `http://${hostname}:8000`;
-      } else if (window.location.origin && window.location.origin !== 'null') {
-        window.GUINE_API_URL = window.location.origin;
       } else {
-        window.GUINE_API_URL = 'http://127.0.0.1:8000';
+        window.GUINE_API_URL = 'https://guine.fastapicloud.dev';
       }
     }
   </script>
